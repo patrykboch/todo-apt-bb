@@ -12,7 +12,7 @@ class TodoService {
         try {
             const data = await axios.get<TodoFromApi[]>(config.apiUrl)
             const mappedTodos = this.mapTodos(data.data)
-            
+
             return {
                 status: data.status,
                 todos: mappedTodos ?? []
@@ -27,7 +27,6 @@ class TodoService {
 
     public addTodo = async (todo: Todo): Promise<boolean> => {
         const data = await axios.post(config.apiUrl, {...todo})
-        console.log(data)
         return true
     }
 

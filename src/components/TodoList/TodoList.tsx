@@ -8,7 +8,7 @@ type TodoListProps = {
 }
 
 const TodoList = ({todos, handleIsCompletedChange, deleteTodo}: TodoListProps) => {
-    if(!todos) return <p>There is no todos!</p>
+    if(!todos?.length) return <p>There is no todos!</p>
 
     return (
         <ul>

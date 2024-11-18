@@ -57,7 +57,7 @@ const Todos = () => {
 
     return (
         <div className="container">
-            {error && <p>{error}</p>}
+            {error && <p>Smotehing went wrong: {error}</p>}
             <TodoForm onSubmit={onSubmitForm}/>
             {status === 'isLoading' && <Loader />}
             <TodoList handleIsCompletedChange={handleIsCompletedChange} deleteTodo={deleteTodo} todos={todos}/>
