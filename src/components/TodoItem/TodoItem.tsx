@@ -9,10 +9,10 @@ type TodoItemProps = {
 
 const TodoItem = ({todo, handleIsCompletedChange, deleteTodo}: TodoItemProps) => {
     return (
-        <div className="flex mb-4 items-center">
+        <div className="flex mb-4 items-center border rounded p-1 border-1">
             <div className={cn("flex flex-col min-w-[500px]", {'line-through': todo.isCompleted})}>
                 <p className="w-full text-grey-darkest">{todo.title}</p>
-                <p>{todo.description}</p>
+                <p>{todo.body}</p>
             </div>
             <button 
                 onClick={()=> handleIsCompletedChange(todo.id)} 

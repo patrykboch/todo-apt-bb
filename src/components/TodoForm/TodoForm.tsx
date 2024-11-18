@@ -16,8 +16,9 @@ const TodoForm = ({onSubmit}:TodoFormProps) => {
 
         const newTodo = {
             id: generateId(),
+            userId: generateId(),
             title: formData.get('title') as string,
-            description: formData.get('description') as string,
+            body: formData.get('body') as string,
             isCompleted: false
         }
 
@@ -41,13 +42,13 @@ const TodoForm = ({onSubmit}:TodoFormProps) => {
                 />
             </div>
             <div className="mb-6">
-                <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="description">
+                <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="body">
                 Todo Description
                 </label>
                 <textarea
                     className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                    id="description"
-                    name="description"
+                    id="body"
+                    name="body"
                     placeholder="Todo Description"
                 ></textarea>
             </div>
