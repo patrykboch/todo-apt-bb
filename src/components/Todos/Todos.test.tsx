@@ -1,111 +1,126 @@
-import { act, fireEvent, render, screen } from "@testing-library/react";
+import { act, render, screen } from "@testing-library/react";
 import axios from "axios";
 import Todos from "./Todos";
-import { generateId } from "../../utils/generateId";
-import userEvent from '@testing-library/user-event'
-// import mockAxios from "../../__mocks__/axios";
+import userEvent from "@testing-library/user-event";
+import { Todo } from "../../types";
+import { todosMock } from "../../mocks";
 
-jest.mock('axios');
-// const mockedAxios = axios as jest.Mocked<typeof axios>;
+jest.mock("axios");
 
-const todos = [
-    {
-        id: generateId(),
-        userId: generateId(),
-        title: 'Title 1',
-        body: 'Description 1',
-        isCompleted: false
-    },
-    {
-        id: generateId(),
-        userId: generateId(),
-        title: 'Title 2',
-        body: 'Description 2',
-        isCompleted: false
-    },
-    {
-        id: generateId(),
-        userId: generateId(),
-        title: 'Title 3',
-        body: 'Description 3',
-        isCompleted: false
-    },
-]
-  
-// afterEach(() => {
-//     // cleaning up the mess left behind the previous test
-//     mockAxios.reset();
-// });
+describe("Todos", () => {
+  const renderComponent = async (todos: Todo[]) => {
+    const user = userEvent.setup();
 
-describe('Todos', ()=> {
-    it('should render list of todos', async() => {
-        jest.spyOn(axios, 'get').mockResolvedValue({
-            data: todos
-        })
-    
-        await act( async () => {
-          render(<Todos/>)
-        });
+    jest.spyOn(axios, "get").mockResolvedValue({
+      data: todos,
+    });
 
-       todos.forEach((todo) => {
-        expect(screen.getByText(todo.body)).toBeInTheDocument()
-       })
- 
-    })
+    await act(async () => {
+      render(<Todos />);
+    });
 
-    it('should correclty delete todo', async() => {
-        jest.spyOn(axios, 'get').mockResolvedValue({
-            data: [{
-                id: generateId(),
-                userId: generateId(),
-                title: 'Title 1',
-                body: 'Description 1',
-                isCompleted: false
-            }]
-        })
-    
-        await act( async () => {
-          render(<Todos/>)
-        });
+    const todoTitleInput = screen.getByRole("textbox", {
+      name: /todo title/i,
+    });
+    const todoDescriptionInput = screen.getByRole("textbox", {
+      name: /todo description/i,
+    });
 
-        const todo = screen.getByText('Title 1')
-        expect(todo).toBeInTheDocument()
+    return {
+      user,
+      todoTitleInput,
+      todoDescriptionInput,
+    };
+  };
 
-       const button = screen.getByRole('button', {
-        name: /remove/i
-      })
+  it("should render list of todos", async () => {
+    await renderComponent(todosMock);
 
-      fireEvent.click(button)
+    todosMock.forEach((todo) => {
+      expect(screen.getByText(todo.body)).toBeInTheDocument();
+    });
+  });
 
-      expect(todo).not.toBeInTheDocument()
-    })
+  it("should correclty delete todo", async () => {
+    const { user } = await renderComponent([todosMock[0]]);
 
-    it('should correclty complete todo', async() => {
-        jest.spyOn(axios, 'get').mockResolvedValue({
-            data: [{
-                id: generateId(),
-                userId: generateId(),
-                title: 'Title 1',
-                body: 'Description 1',
-                isCompleted: false
-            }]
-        })
-    
-        await act( async () => {
-          render(<Todos/>)
-        });
-      
-        const doneBtn = screen.getByText('Done')
-        expect(doneBtn).toBeInTheDocument()
+    const todo = screen.getByText("Title 1");
+    expect(todo).toBeInTheDocument();
 
-        const button = screen.getByRole('button', {
-            name: /done/i
-          })
+    const button = screen.getByRole("button", {
+      name: /remove/i,
+    });
 
-      fireEvent.click(button)
+    await user.click(button);
 
-      expect(screen.getByText('Not Done')).toBeInTheDocument()
+    expect(todo).not.toBeInTheDocument();
+  });
 
-    })
-    
-})
+  it("should correctly complete todo", async () => {
+    const { user } = await renderComponent([todosMock[0]]);
+
+    const doneBtn = screen.getByText("Done");
+    expect(doneBtn).toBeInTheDocument();
+
+    const button = screen.getByRole("button", {
+      name: /done/i,
+    });
+
+    await user.click(button);
+
+    expect(screen.getByText("Not Done")).toBeInTheDocument();
+  });
+
+  it("should correctly add new todo to list", async () => {
+    const { user, todoTitleInput, todoDescriptionInput } =
+      await renderComponent([]);
+
+    const newTodo = {
+      title: "Lorem ipsum title",
+      description: "Lorem ipsum description",
+    };
+
+    const submitButton = screen.getByRole("button");
+
+    await screen.findByRole("form");
+    await user.type(todoTitleInput, newTodo.title);
+    await user.type(todoDescriptionInput, newTodo.description);
+
+    expect(todoTitleInput).toHaveValue(newTodo.title);
+    expect(todoDescriptionInput).toHaveValue(newTodo.description);
+
+    await user.click(submitButton);
+
+    expect(screen.getByText(newTodo.title)).toBeInTheDocument();
+    expect(screen.getByText(newTodo.description)).toBeInTheDocument();
+  });
+
+  it("should show loading when data is fetching and hide when it's done", async () => {
+    const { rerender } = render(<Todos />);
+
+    expect(screen.getByText(/loading\.\.\./i)).toBeInTheDocument();
+
+    jest.spyOn(axios, "get").mockResolvedValueOnce({
+      data: [],
+    });
+
+    await act(async () => {
+      rerender(<Todos />);
+    });
+
+    expect(screen.queryByText(/loading\.\.\./i)).not.toBeInTheDocument();
+  });
+
+  it("should show error message when error occur", async () => {
+    jest.spyOn(axios, "get").mockRejectedValue(new Error("Network error"));
+    const { rerender } = render(<Todos />);
+
+    await act(async () => {
+      rerender(<Todos />);
+    });
+
+    expect(
+      screen.getByText(/smotehing went wrong: network error/i)
+    ).toBeInTheDocument();
+  });
+});
